@@ -137,13 +137,15 @@ The power model is defined as:
   - ON: 10% PRB
   - OFF: 20% PRB
 
-### 3. Build and run
+## How to Run
+
+### 1. Build and run
 
 ```bash
 docker compose build
 docker compose up -d
 
-### 4. Access services
+2. Access services
 Dashboard
 http://localhost:8503
 LLM Assistant
@@ -151,5 +153,6 @@ Available inside the dashboard
 API
 http://localhost:8000/status
 
-### 5. View logs
+3. View logs
 docker compose logs -f
+
