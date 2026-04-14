@@ -1,0 +1,180 @@
+services:
+  # -----------------------------
+  # Zookeeper
+  # -----------------------------
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: coo-xapp-zookeeper-1
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    restart: always
+
+  # -----------------------------
+  # Kafka
+  # -----------------------------
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: coo-xapp-kafka-1
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+    depends_on:
+      - zookeeper
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "kafka-topics --bootstrap-server kafka:9092 --list >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: always
+
+  # -----------------------------
+  # Topic initializer
+  # -----------------------------
+  topic-init:
+    image: confluentinc/cp-kafka:7.6.1
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["/bin/bash", "-lc"]
+    command: >
+      "
+      set -e;
+      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic ue.measurements --partitions 1 --replication-factor 1;
+      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic xapp.actions     --partitions 1 --replication-factor 1;
+      echo 'Topics ready';
+      "
+    restart: "no"
+
+  # -----------------------------
+  # Collector
+  # -----------------------------
+  collector:
+    build:
+      context: .
+      dockerfile: ./services/collector/Dockerfile
+    environment:
+      KAFKA_BROKER: kafka:9092
+    volumes:
+      #- ./shared:/shared:delegated
+      - /tmp/coo_shared:/shared
+    depends_on:
+      topic-init:
+        condition: service_completed_successfully
+    command: ["python", "-u", "collector.py"]
+    restart: always
+
+  # -----------------------------
+  # Trainer
+  # -----------------------------
+  trainer:
+    build:
+      context: .
+      dockerfile: ./services/trainer/Dockerfile
+    environment:
+      KAFKA_BROKER: kafka:9092
+      MODEL_DIR: /models
+      MIN_SAMPLES: "200"
+    volumes:
+      - ./models:/models
+      - /tmp/coo_shared:/shared
+      #- ./shared:/shared:delegated
+    depends_on:
+      topic-init:
+        condition: service_completed_successfully
+    command: ["python", "train.py"]
+    restart: on-failure
+
+  # -----------------------------
+  # Inference
+  # -----------------------------
+  inference:
+    build:
+      context: .
+      dockerfile: ./services/inference/Dockerfile
+    environment:
+      KAFKA_BROKER: kafka:9092
+      MODEL_PATH: /models/coo_model.joblib
+      OUTPUT_TOPIC: ue.predictions
+    volumes:
+      - ./models:/models
+      - /tmp/coo_shared:/shared
+      #- ./shared:/shared:delegated
+    depends_on:
+      kafka:
+        condition: service_healthy
+      trainer:
+        condition: service_started
+    command: ["python", "inference.py"]
+    restart: always
+
+  # -----------------------------
+  # OAM API
+  # -----------------------------
+  oam:
+    build:
+      context: .
+      dockerfile: ./services/oam/Dockerfile
+    environment:
+      MODEL_DIR: /models
+    volumes:
+      - ./models:/models
+      #- ./shared:/shared:delegated
+      - /tmp/coo_shared:/shared
+    ports:
+      - "8000:8000"
+    depends_on:
+      inference:
+        condition: service_started
+    command: ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]
+    restart: on-failure
+
+  # -----------------------------
+  # Dashboard (Single-Page LLM Test)
+  # -----------------------------
+  dashboard_llm:
+    build:
+      context: .
+      dockerfile: ./services/dashboard/Dockerfile
+    environment:
+      - OAM_URL=http://oam:8000
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      #- ./shared:/shared:delegated
+      - /tmp/coo_shared:/shared
+      - ./shared:/persisted_shared
+      - ./services/dashboard:/app
+    ports:
+      - "8502:8501"
+    depends_on:
+      oam:
+        condition: service_started
+    command: streamlit run app_llm_test.py --server.port=8501 --server.address=0.0.0.0
+    restart: on-failure
+
+  # -----------------------------
+  # Dashboard (Multipage Streamlit)
+  # -----------------------------
+  dashboard_mp:
+    build:
+      context: .
+      dockerfile: ./services/dashboard/Dockerfile
+    environment:
+      - OAM_URL=http://oam:8000
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      #- ./shared:/shared:delegated
+      - /tmp/coo_shared:/shared
+      - ./shared:/persisted_shared
+      - ./services/dashboard:/app
+    ports:
+      - "8503:8501"
+    depends_on:
+      oam:
+        condition: service_started
+    command: streamlit run streamlit_app.py --server.port=8501 --server.address=0.0.0.0
+    restart: on-failure

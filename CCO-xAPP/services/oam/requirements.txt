@@ -1,0 +1,8 @@
+
+fastapi==0.115.5
+uvicorn==0.32.0
+kafka-python==2.0.2
+pydantic==2.9.2
+scikit-learn==1.5.2
+joblib==1.4.2
+python-dotenv==1.0.1
