@@ -59,56 +59,83 @@ uplink_mbps, ho_success_rate, ptot]
 
 ### 2. Heuristic (Bootstrap Phase)
 
-Used before enough training data is available:
+Used before sufficient training data is available:
 
-```python
-if prb_util < 0.25 and ue_count < 12 and ho_success_rate > 90%:
-    sleep
-elif prb_util > 0.6 or ue_count > 40 or ho_success_rate < 85%:
-    wake
-else:
-    keep
+- If the cell is lightly loaded and handovers are stable → **sleep**
+- If the cell is highly loaded or unstable → **wake**
+- Otherwise → **keep current state**
+
+**Decision rules:**
+
+- Sleep:
+  - `prb_util < 0.25`
+  - `ue_count < 12`
+  - `ho_success_rate > 90%`
+
+- Wake:
+  - `prb_util > 0.6`
+  - OR `ue_count > 40`
+  - OR `ho_success_rate < 85%`
+
+- Otherwise:
+  - `keep`
 
 ---
 
-3. ML-Based Decision
+### 3. ML-Based Decision
 
 - Model trained on historical KPI data  
 - Continuously updated  
 - Predicts optimal state:
 
-```text
-sleep
-wake
-keep
+**States:**
+- `sleep`
+- `wake`
+- `keep`
+
+---
 
 ### 4. Neighbor Awareness
 
-- No explicit topology used  
-- **HO success rate acts as a proxy**  
+- No explicit topology is used  
+- **HO success rate acts as a proxy for neighbor capacity**
   - High HO success → safe to sleep  
   - Low HO success → avoid sleeping  
 
+---
+
 ### 5. Energy Model
 
-P_active = P0 + Δp * Pmax * prb_util
-P_sleep  = f_sleep * P_active
-power_saved = P_active - P_sleep
+The power model is defined as:
 
-Where:
+- `P_active = P0 + Δp × Pmax × prb_util`
+- `P_sleep = f_sleep × P_active`
+- `power_saved = P_active - P_sleep`
 
-f_sleep = 0.2 (~80% energy savings)
-RF chain is turned off, baseband remains active
+**Where:**
+
+- `f_sleep = 0.2` (≈80% energy savings)  
+- RF transmission chain is turned off  
+- Baseband remains active for fast recovery  
+
+---
 
 ### 6. Switching Logic
 
-if load < OFF_threshold and neighbors_load OK → sleep
-if OFF and neighbor load high → wake
+**Basic policy:**
 
-Example thresholds:
+- If load is low and neighbors can absorb traffic → `sleep`
+- If sleeping cell is needed by neighbors → `wake`
 
-Night: 5% ON / 10% OFF
-Day: 10% ON / 20% OFF
+**Example thresholds:**
+
+- Night:
+  - ON: 5% PRB
+  - OFF: 10% PRB
+
+- Day:
+  - ON: 10% PRB
+  - OFF: 20% PRB
 
 ### 3. Build and run
 
