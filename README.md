@@ -152,9 +152,6 @@ docker compose up -d
   http://localhost:8503
 - LLM Assistant:
   Available inside the dashboard
-- API:
-  http://localhost:8000/status
-
 
 ### 3. View logs
 ```bash
