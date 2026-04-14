@@ -157,5 +157,6 @@ docker compose up -d
 
 
 ### 3. View logs
+```bash
 docker compose logs -f
-
+```
