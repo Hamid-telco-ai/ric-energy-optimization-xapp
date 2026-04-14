@@ -144,9 +144,3 @@ The power model is defined as:
 ```bash
 docker compose build
 docker compose up -d
-
-
-
-3. View logs
-docker compose logs -f
-
