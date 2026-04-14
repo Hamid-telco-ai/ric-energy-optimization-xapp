@@ -71,7 +71,7 @@ else:
 
 ---
 
-### 3. ML-Based Decision
+3. ML-Based Decision
 
 - Model trained on historical KPI data  
 - Continuously updated  
