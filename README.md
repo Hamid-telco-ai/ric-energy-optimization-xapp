@@ -145,10 +145,17 @@ The power model is defined as:
 docker compose build
 docker compose up -d
 
-2. Access services
-Dashboard
-http://localhost:8503
-LLM Assistant
-Available inside the dashboard
-API
-http://localhost:8000/status
+```
+
+### 2. Access services
+- Dashboard:
+  http://localhost:8503
+- LLM Assistant:
+  Available inside the dashboard
+- API:
+  http://localhost:8000/status
+
+
+### 3. View logs
+docker compose logs -f
+
