@@ -69,7 +69,7 @@ def evaluate_and_pick(X, y):
         report.append((name, acc, prec, rec, f1, cm, model))
     # pick best
     report.sort(key=lambda r: r[4], reverse=True)
-    print("\n📊 [trainer] MODEL PERFORMANCE")
+    print("\n [trainer] MODEL PERFORMANCE")
     for name, acc, prec, rec, f1, cm, _ in report:
         print(f"  {name:6s} acc={acc:.3f} prec={prec:.3f} rec={rec:.3f} f1={f1:.3f}\n    CM=\n{cm}")
     #best = report[0][-1]
@@ -78,10 +78,10 @@ def evaluate_and_pick(X, y):
     best_f1 = report[0][4]
     best_model = report[0][-1]
 
-    print(f"[trainer] ✅ best model: {best_name}")
+    print(f"[trainer]  best model: {best_name}")
     joblib.dump(best_model, MODEL_PATH)
     #return best_model_name, best_acc, best_f1
-    print(f"[trainer] ✅ saved → {MODEL_PATH}")
+    print(f"[trainer]  saved → {MODEL_PATH}")
     #return best_name, best_acc, best_prec, best_rec, best_f1
     return best_name, best_acc, best_f1
 
@@ -119,7 +119,7 @@ def main():
 
             print(f"[trainer] logged metrics: {metrics}")
             buffer.clear()
-            print(f"[trainer] 🔄 cleared buffer; waiting for next {MIN_SAMPLES} samples")
+            print(f"[trainer]  cleared buffer; waiting for next {MIN_SAMPLES} samples")
 
 
 if __name__ == "__main__":
