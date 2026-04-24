@@ -13,6 +13,8 @@ The system includes an **LLM-powered assistant** that explains decisions using l
 ## System Architecture
 <img width="1652" height="908" alt="DataFlow Overview" src="https://github.com/user-attachments/assets/76beac4d-ea2e-4962-be76-1b5c0cb2cff8" />
 
+<img width="756" height="457" alt="unnamed" src="https://github.com/user-attachments/assets/d87661bf-f2d2-4641-b61d-4ac701b74508" />
+
 
 - **Collector**: Generates UE measurements and KPIs  
 - **Trainer**: Trains ML model on labeled data  
