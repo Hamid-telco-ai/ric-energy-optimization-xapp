@@ -158,3 +158,9 @@ docker compose up -d
 ```bash
 docker compose logs -f
 ```
+
+## References
+
+- **O-RAN Alliance – Study on Security for Artificial Intelligence and Machine Learning (AI/ML) in O-RAN (v4.0)**  
+  Provides a comprehensive analysis of security challenges, threats, and mitigation strategies for AI/ML applications within O-RAN architectures.  
+  https://www.o-ran.org/specifications
